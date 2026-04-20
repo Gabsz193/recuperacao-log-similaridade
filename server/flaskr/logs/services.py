@@ -1,11 +1,13 @@
 from datetime import datetime
+import re
 import os
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, helpers
+
 
 class LogService:
     def __init__(self):
         self.es = Elasticsearch(os.getenv("ELASTICSEARCH_HOST"))
-        self.index = "log-files"
+        self.index = "log-files-2"
         self.ensure_index()
 
     def ensure_index(self):
@@ -13,42 +15,38 @@ class LogService:
         if not exists:
             self.es.indices.create(
                 index=self.index,
-                mappings={
-                    "properties": {
-                        "filename":   {"type": "keyword"},
-                        "content":    {
-                            "type": "text",
-                            "analyzer": "log_analyzer",
-                            "term_vector": "with_positions_offsets",
-                        },
-                        "line_count": {"type": "integer"},
-                        "file_size":  {"type": "long"},
-                        "uploaded_at": {"type": "date"},
-                    }
-                },
                 settings={
+                    "index": {
+                        "similarity": {
+                            "default": {
+                                "type": "BM25"  # Garante o algoritmo BM25
+                            }
+                        }
+                    },
                     "analysis": {
                         "analyzer": {
                             "log_analyzer": {
                                 "type": "custom",
                                 "tokenizer": "standard",
-                                "filter": ["lowercase", "log_stop_words"],
-                                "char_filter": ["log_normalizer"],
+                                "filter": ["lowercase", "stop", "asciifolding"]
                             }
+                        }
+                    }
+                },
+                mappings={
+                    "properties": {
+                        "timestamp": {"type": "date"},
+                        "pid": {"type": "integer"},
+                        "tid": {"type": "integer"},
+                        "level": {"type": "keyword"},  # I, E, W
+                        "tag": {"type": "text", "analyzer": "standard"},
+                        "message": {
+                            "type": "text",
+                            "analyzer": "log_analyzer",
+                            "term_vector": "with_positions_offsets",
                         },
-                        "char_filter": {
-                            "log_normalizer": {
-                                "type": "pattern_replace",
-                                "pattern": r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[\d+\]|\d{2}:\d{2}:\d{2}|port \d+)",
-                                "replacement": " ",
-                            }
-                        },
-                        "filter": {
-                            "log_stop_words": {
-                                "type": "stop",
-                                "stopwords": ["the", "a", "an", "is", "by", "for", "from", "to", "at", "in", "of"],
-                            }
-                        },
+                        "filename": {"type": "keyword"},
+                        "raw_log": {"type": "text", "index": False},
                     }
                 },
             )
@@ -59,51 +57,84 @@ class LogService:
     def upload_files(self, files):
         results = []
 
+        log_pattern = re.compile(
+            r'(?P<date>\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d{3})\s+(?P<pid>\d+)\s+(?P<tid>\d+)\s+(?P<level>\w)\s+(?P<tag>[^:]+):\s+(?P<message>.*)')
+
         for uploaded_file in files:
             content = uploaded_file.read().decode("utf-8")
-            line_count = self._count_lines(content)
-            file_size = len(content.encode("utf-8"))
+            lines = content.splitlines()
 
-            existing = self.es.search(
+            self.es.delete_by_query(
                 index=self.index,
-                query={"term": {"filename": uploaded_file.filename}},
-                size=1,
+                query={"match": {"filename": uploaded_file.filename}},
+                refresh=True
             )
 
-            doc_body = {
-                "filename": uploaded_file.filename,
-                "content": content,
-                "line_count": line_count,
-                "file_size": file_size,
-                "uploaded_at": datetime.utcnow().isoformat() + "Z",
-            }
+            actions = []
+            uploaded_at = datetime.utcnow().isoformat() + "Z"
+            current_year = datetime.now().year
 
-            if existing["hits"]["total"]["value"] > 0:
-                doc_id = existing["hits"]["hits"][0]["_id"]
-                self.es.update(index=self.index, id=doc_id, doc=doc_body)
-                results.append({"filename": uploaded_file.filename, "action": "updated", "lineCount": line_count})
-            else:
-                self.es.index(index=self.index, document=doc_body)
-                results.append({"filename": uploaded_file.filename, "action": "indexed", "lineCount": line_count})
+            for line in lines:
+                match = log_pattern.match(line)
+                if match:
+
+                    data = match.groupdict()
+                    doc = {
+                        "_index": self.index,
+                        "_source": {
+                            "filename": uploaded_file.filename,
+                            "timestamp": f"{current_year}-{data['date'].replace(' ', 'T')}Z",
+                            "pid": int(data["pid"]),
+                            "tid": int(data["tid"]),
+                            "level": data["level"],
+                            "tag": data["tag"],
+                            "message": data["message"],
+                            "uploaded_at": uploaded_at,
+                            "raw_log": line,
+                        }
+                    }
+                    actions.append(doc)
+
+            if actions:
+                helpers.bulk(self.es, actions)
+                results.append({
+                    "filename": uploaded_file.filename,
+                    "action": "indexed",
+                    "lineCount": len(actions)
+                })
 
         self.es.indices.refresh(index=self.index)
         return results
 
     def list_files(self):
-        result = self.es.search(
-            index=self.index,
-            size=100,
-            query={"match_all": {}},
-            _source=["filename", "line_count", "file_size", "uploaded_at"],
-            sort=[{"uploaded_at": {"order": "desc"}}],
-        )
-        return [
-            {
-                "id": hit["_id"],
-                **hit["_source"],
+        query = {
+            "size": 0,  # Não queremos as linhas individuais, apenas os grupos
+            "aggs": {
+                "files_grouped": {
+                    "terms": {
+                        "field": "filename",
+                        "size": 100
+                    },
+                    "aggs": {
+                        "total_lines": {"value_count": {"field": "filename"}},
+                        "last_upload": {"max": {"field": "uploaded_at"}}
+                    }
+                }
             }
-            for hit in result["hits"]["hits"]
-        ]
+        }
+
+        result = self.es.search(index=self.index, body=query)
+
+        # Formatando para o seu React receber uma lista limpa
+        files = []
+        for bucket in result["aggregations"]["files_grouped"]["buckets"]:
+            files.append({
+                "filename": bucket["key"],
+                "line_count": bucket["total_lines"]["value"],
+                "uploaded_at": bucket["last_upload"]["value_as_string"]
+            })
+
+        return files
 
     def delete_file(self, file_id):
         self.es.delete(index=self.index, id=file_id)
@@ -114,44 +145,42 @@ class LogService:
             index=self.index,
             size=size,
             query={
-                "match": {
-                    "content": {
-                        "query": query_text,
-                        "operator": "or",
-                        "fuzziness": "AUTO",
-                    }
+                "multi-match": {
+                    "query": query_text,
+                    "fields": ["message^3", "tag^1.5", "raw_log"],
+                    "operator": "or",
+                    "fuzziness": "AUTO",
                 }
             },
             highlight={
                 "fields": {
-                    "content": {
-                        "fragment_size": 200,
-                        "number_of_fragments": 5,
-                        "pre_tags": ["<<<"],
-                        "post_tags": [">>>"],
-                    }
+                    "message": {
+                        "pre_tags": ["<mark>"],
+                        "post_tags": ["</mark>"],
+                    },
+                    "tag": {}
                 }
             },
-            _source=["filename", "line_count", "file_size"],
+            _source=["filename", "timestamp", "level", "tag", "message", "raw_log"],
         )
 
         hits = []
         for hit in result["hits"]["hits"]:
-            highlights = [
-                {
-                    "text": fragment.replace("<<<", "").replace(">>>", "").strip(),
-                    "marked": fragment,
-                }
-                for fragment in hit.get("highlight", {}).get("content", [])
-            ]
+            source = hit["_source"]
+
+            highlight_data = hit.get("highlight", {})
+            message_highlight = highlight_data.get("message", [source["message"]])[0]
 
             hits.append({
                 "id": hit["_id"],
-                "filename": hit["_source"]["filename"],
-                "line_count": hit["_source"]["line_count"],
-                "file_size": hit["_source"]["file_size"],
-                "score": hit.get("_score"),
-                "highlights": highlights,
+                "score": hit["_score"],
+                "filename": source["filename"],
+                "timestamp": source["timestamp"],
+                "level": source["level"],
+                "tag": source["tag"],
+                "message": source["message"],
+                "highlighted_message": message_highlight,
+                "raw": source["raw_log"],
             })
 
         return {
