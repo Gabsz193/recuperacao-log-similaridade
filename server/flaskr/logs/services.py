@@ -1,9 +1,10 @@
 from datetime import datetime
+import os
 from elasticsearch import Elasticsearch
 
 class LogService:
     def __init__(self):
-        self.es = Elasticsearch("http://localhost:9200")
+        self.es = Elasticsearch(os.getenv("ELASTICSEARCH_HOST"))
         self.index = "log-files"
         self.ensure_index()
 
@@ -38,7 +39,7 @@ class LogService:
                         "char_filter": {
                             "log_normalizer": {
                                 "type": "pattern_replace",
-                                "pattern": "(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|\\[\\d+\\]|\\d{2}:\\d{2}:\\d{2}|port \\d+)",
+                                "pattern": r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[\d+\]|\d{2}:\d{2}:\d{2}|port \d+)",
                                 "replacement": " ",
                             }
                         },
