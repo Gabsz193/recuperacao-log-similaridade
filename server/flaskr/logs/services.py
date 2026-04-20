@@ -147,7 +147,7 @@ class LogService:
             query={
                 "multi_match": {
                     "query": query_text,
-                    "fields": ["message^3", "tag^1.5", "raw_log"],
+                    "fields": ["message^3", "tag^1.5"],
                     "operator": "or",
                     "fuzziness": "AUTO",
                 }
@@ -170,6 +170,18 @@ class LogService:
 
             highlight_data = hit.get("highlight", {})
             message_highlight = highlight_data.get("message", [source["message"]])[0]
+            message_fragments = highlight_data.get("message", [source["message"]])
+
+            # Gerando a lista de highlights conforme o formato solicitado
+            highlights = [
+                {
+                    # Remove as tags de marcação para ter o texto limpo
+                    "text": fragment.replace("<mark>", "").replace("</mark>", "").strip(),
+                    # Mantém o texto com as tags para o React renderizar
+                    "marked": fragment,
+                }
+                for fragment in message_fragments
+            ]
 
             hits.append({
                 "id": hit["_id"],
@@ -180,6 +192,7 @@ class LogService:
                 "tag": source["tag"],
                 "message": source["message"],
                 "highlighted_message": message_highlight,
+                "highlights": highlights,
                 "raw": source["raw_log"],
             })
 
