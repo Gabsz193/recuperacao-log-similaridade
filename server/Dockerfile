@@ -21,7 +21,6 @@ ENV PATH=/root/.local/bin:$PATH
 # Copia a pasta do módulo inteira
 # Isso já leva o flaskr/__init__.py e todo o resto
 COPY flaskr/ ./flaskr/
-COPY .env .
 
 # Variáveis de ambiente
 ENV FLASK_APP=flaskr
