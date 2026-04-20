@@ -4,34 +4,51 @@ from .services import LogService
 log_service = LogService()
 
 def upload_logs_controller():
-    if 'file' not in request.files:
-        return jsonify({"error": "Não há nenhum arquivo enviado"}), 400
-    
-    file = request.files['file']
-    
+    files = request.files.getlist('files')
+    if not files:
+        return jsonify({"error": "Nenhum arquivo enviado"}), 400
+
     try:
-        total = log_service.process_bulk_upload(file)
-        return jsonify({"status": "success", "processados": total}), 200
+        results = log_service.upload_files(files)
+        return jsonify({"success": True, "files": results}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-    
+
+
+def list_files_controller():
+    try:
+        files = log_service.list_files()
+        return jsonify({"files": files}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def delete_file_controller(file_id):
+    try:
+        log_service.delete_file(file_id)
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 def search_logs_controller():
-    # Pega o parâmetro 'q' da URL: /search?q=erro+conexao
-    query = request.args.get('q', '')
-    if not query:
-        return jsonify({"error": "Parâmetro 'q' é obrigatório"}), 400
-    
+    payload = request.get_json(silent=True) or {}
+    query = payload.get('query') or request.args.get('q', '')
+    size = payload.get('size', 10)
+
+    if not query or not str(query).strip():
+        return jsonify({"error": "Query vazia"}), 400
+
     try:
-        results = log_service.search_logs(query)
-        # Formatamos para retornar ID, Score (BM25) e o Conteúdo
-        output = [
-            {
-                "id": hit["_id"],
-                "score": hit["_score"], 
-                "log": hit["_source"]["log"]
-            } for hit in results
-        ]
-        return jsonify(output), 200
+        result = log_service.search(query, size)
+        return jsonify(result), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+def health_controller():
+    try:
+        status = log_service.health()
+        return jsonify(status), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 503

@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
 // ── Config ─────────────────────────────────────────────────────────────────
-const API = "http://localhost:3001/api";
+const API = "http://localhost:5000/logs";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function categorize(text) {
