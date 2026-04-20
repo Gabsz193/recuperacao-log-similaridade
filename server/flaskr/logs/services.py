@@ -145,7 +145,7 @@ class LogService:
             index=self.index,
             size=size,
             query={
-                "multi-match": {
+                "multi_match": {
                     "query": query_text,
                     "fields": ["message^3", "tag^1.5", "raw_log"],
                     "operator": "or",
