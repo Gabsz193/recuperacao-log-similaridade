@@ -71,11 +71,12 @@ sejam tratados como semanticamente idênticos.
 - [Node.js](https://nodejs.org) v18 ou superior
 - npm
 
-### Estrutura esperada de pastas
+### Estrutura de pastas
 
 ```
 recuperacao-log-similaridade/
-├── docker-compose.yml
+├── server/
+    ├── docker-compose.yml
 ├── src/                        ← frontend React
 │   ├── App.jsx
 │   ├── main.jsx
