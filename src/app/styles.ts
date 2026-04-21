@@ -79,7 +79,7 @@ export const StatusBox = styled(Box)(({ theme }) => ({
   alignItems: "center",
   gap: "0.5rem",
   fontSize: "0.6875rem",
-  background: theme.palette.background.default,
+  background: theme.palette.background.surfaceDark,
   border: `0.0625rem solid ${theme.palette.divider}`,
   padding: "0.375rem 0.75rem",
   borderRadius: "0.5rem",

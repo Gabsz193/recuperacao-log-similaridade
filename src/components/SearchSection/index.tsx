@@ -1,14 +1,7 @@
 import { SearchBar } from "../SearchBar";
 import { SearchButton } from "../SearchButton";
 import { SearchSectionContainer } from "./styles";
-
-interface SearchSectionProps {
-  query: string;
-  setQuery: (value: string) => void;
-  onSearch: () => void;
-  disabled?: boolean;
-  loading?: boolean;
-}
+import { ISearchSectionProps } from "./types";
 
 export function SearchSection({
   query,
@@ -16,7 +9,7 @@ export function SearchSection({
   onSearch,
   disabled,
   loading,
-}: SearchSectionProps) {
+}: ISearchSectionProps) {
   return (
     <SearchSectionContainer>
       <SearchBar

@@ -1,17 +1,11 @@
-import { Button } from "@mui/material";
 import { ButtonSearch } from "./styles";
-
-interface SearchButtonProps {
-  onClick: () => void;
-  disabled?: boolean;
-  loading?: boolean;
-}
+import { ISearchButtonProps } from "./types";
 
 export function SearchButton({
   onClick,
   disabled,
   loading,
-}: SearchButtonProps) {
+}: ISearchButtonProps) {
   return (
     <ButtonSearch
       variant="contained"

@@ -1,12 +1,5 @@
 import { SearchBarContainer, InputWrapper, Icon, Input } from "./styles";
-
-interface SearchBarProps {
-  query: string;
-  setQuery: (value: string) => void;
-  onSearch: () => void;
-  disabled?: boolean;
-  loading?: boolean;
-}
+import { ISearchBarProps } from "./types";
 
 export function SearchBar({
   query,
@@ -14,7 +7,7 @@ export function SearchBar({
   onSearch,
   disabled,
   loading,
-}: SearchBarProps) {
+}: ISearchBarProps) {
   return (
     <SearchBarContainer>
       <InputWrapper>

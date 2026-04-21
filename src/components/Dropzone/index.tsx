@@ -25,7 +25,7 @@ export function Dropzone({
       onDrop={onDrop}
       onClick={() => inputRef.current?.click()}
     >
-      <Icon>{uploading ? "⏳" : "📂"}</Icon>
+      <Icon $spin={uploading}>{uploading ? "⏳" : "📂"}</Icon>
 
       <Text>
         {uploading ? (

@@ -1,10 +1,7 @@
 import { SummaryText } from "./styles";
+import { IResultsSummaryProps } from "./types";
 
-interface ResultsSummaryProps {
-  total: number;
-}
-
-export function ResultsSummary({ total }: ResultsSummaryProps) {
+export function ResultsSummary({ total }: IResultsSummaryProps) {
   return (
     <SummaryText>
       {total} arquivo{total !== 1 ? "s" : ""} com correspondência - ordenados

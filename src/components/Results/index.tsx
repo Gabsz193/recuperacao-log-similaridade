@@ -4,6 +4,7 @@ import {
   LoadingText,
   EmptyIcon,
   EmptyText,
+  Spinner,
   ResultCard,
   ResultRow,
   RankBadge,
@@ -33,7 +34,7 @@ export function Results({
     <ResultsWrapper>
       {searching && (
         <CenterState>
-          <span>⏳</span>
+          <Spinner />
           <LoadingText>Consultando Elasticsearch…</LoadingText>
         </CenterState>
       )}
