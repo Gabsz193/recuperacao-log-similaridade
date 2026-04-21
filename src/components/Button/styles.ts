@@ -1,7 +1,7 @@
 import { styled } from "@mui/material/styles";
-import { Button } from "@mui/material";
+import { Button as MuiButton } from "@mui/material";
 
-export const ButtonSearch = styled(Button)(({ theme }) => ({
+export const ButtonRoot = styled(MuiButton)(({ theme }) => ({
   borderRadius: "0.625rem",
   padding: "0 1.5rem",
   fontSize: "0.8125rem",

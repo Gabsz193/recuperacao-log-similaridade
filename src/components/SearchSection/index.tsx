@@ -1,5 +1,5 @@
 import { SearchBar } from "../SearchBar";
-import { SearchButton } from "../SearchButton";
+import { Button } from "../Button";
 import { SearchSectionContainer } from "./styles";
 import { ISearchSectionProps } from "./types";
 
@@ -19,11 +19,9 @@ export function SearchSection({
         disabled={disabled}
         loading={loading}
       />
-      <SearchButton
-        onClick={onSearch}
-        disabled={disabled || loading}
-        loading={loading}
-      />
+      <Button onClick={onSearch} disabled={disabled} loading={loading}>
+        Buscar
+      </Button>
     </SearchSectionContainer>
   );
 }

@@ -11,6 +11,7 @@ import {
   StatusBox,
   StatusDot,
   UploadMessageBox,
+  UploadHint,
   ContentWrapper,
 } from "./styles";
 
@@ -186,17 +187,10 @@ export default function App() {
           />
 
           {!indexedFiles.length && !uploading && (
-            <div
-              style={{
-                fontSize: 11,
-                color: theme.palette.info.default,
-                marginTop: 8,
-                textAlign: "center",
-              }}
-            >
+            <UploadHint>
               ↑ Faça upload de pelo menos um arquivo .log para indexar no
               Elasticsearch
-            </div>
+            </UploadHint>
           )}
         </ContentWrapper>
       </HeaderContainer>

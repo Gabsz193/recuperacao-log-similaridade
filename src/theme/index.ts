@@ -8,6 +8,10 @@ export const theme = createTheme({
       main: colors.primary,
     },
 
+    secondary: {
+      main: colors.secondary,
+    },
+
     success: {
       main: colors.success.main,
       light: colors.success.light,

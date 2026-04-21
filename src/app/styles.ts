@@ -118,6 +118,13 @@ export const DropAreaSpacer = styled(Box)({
   marginTop: "1rem",
 });
 
+export const UploadHint = styled(Box)(({ theme }) => ({
+  fontSize: "0.6875rem",
+  color: theme.palette.info.default,
+  marginTop: "0.5rem",
+  textAlign: "center",
+}));
+
 export const PageContent = styled(Box)({
   padding: "1.5rem 2rem",
 });
