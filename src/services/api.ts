@@ -1,38 +1,62 @@
-const API = "http://localhost:3001/api";
+import axios, { AxiosError } from "axios";
 
-export async function fetchHealth() {
-  const r = await fetch(`${API}/health`);
-  return r.json();
+const API_BASE_URL = "http://localhost:5000/logs";
+
+const client = axios.create({
+  baseURL: API_BASE_URL,
+})
+
+export interface HealthStatus {
+  documents: number;
+  status: "yellow" | "green";
 }
 
-export async function fetchFiles() {
-  const r = await fetch(`${API}/files`);
-  return r.json();
+export async function fetchHealth(): Promise<HealthStatus> {
+  const { data } = await client.get<HealthStatus>("/health");
+
+  return data;
 }
 
-export async function uploadFilesRequest(form: FormData) {
-  const r = await fetch(`${API}/upload`, {
-    method: "POST",
-    body: form,
-  });
-  const d = await r.json();
-  if (!r.ok) throw new Error(d.error);
-  return d;
+export interface FileData {
+    filename: string;
+    line_count: number;
+    uploaded_at: Date;
+}
+
+export async function fetchFiles(): Promise<{ files: FileData[] }> {
+  const { data } = await client.get<{ files: FileData[] }>("/files");
+  return data;
+}
+
+interface UploadResponse {
+  success: boolean;
+  files: {
+    action: "indexed",
+    filename: string;
+    lineCount: number;
+  }[]
+}
+
+export async function uploadFilesRequest(form: FormData): Promise<UploadResponse> {
+  const r = await client.post("/upload", {
+    files: form.get("files"),
+  }, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    }
+  });  
+
+  console.log(r.data);
+  
+
+  return r.data;
 }
 
 export async function deleteFile(id: string) {
-  await fetch(`${API}/files/${id}`, {
-    method: "DELETE",
-  });
+  await client.delete(`/files/${id}`);
 }
 
 export async function searchRequest(query: string) {
-  const r = await fetch(`${API}/search`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query, size: 10 }),
-  });
-  const d = await r.json();
-  if (!r.ok) throw new Error(d.error);
-  return d;
+  const r = await client.post("/search", { query, size: 10 });
+  return r.data;
 }

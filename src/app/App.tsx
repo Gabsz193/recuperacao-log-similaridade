@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 
 import {
   AppContainer,
@@ -8,35 +8,28 @@ import {
   TitleGroup,
   Title,
   Subtitle,
-  StatusBox,
-  StatusDot,
   UploadMessageBox,
   UploadHint,
   ContentWrapper,
 } from "./styles";
 
 import {
-  fetchFiles,
-  fetchHealth,
   uploadFilesRequest,
   searchRequest,
-  deleteFile,
 } from "../services/api";
 
-import { theme } from "../theme";
 import { fmt } from "../utils/format";
 
 import { Results } from "../components/Results";
 import { SearchSection } from "../components/SearchSection";
 import { FilesChip } from "../components/FilesChip";
-import { Dropzone } from "../components/Dropzone";
+import useLoadFiles from "../hooks/useLoadFiles";
+import StatusES from "../components/StatusES";
+import FileDropzone from "../components/FileDropzone";
 
 export default function App() {
-  const [indexedFiles, setIndexedFiles] = useState([]);
-  const [esStatus, setEsStatus] = useState(null);
-
   const [uploading, setUploading] = useState(false);
-  const [uploadMsg, setUploadMsg] = useState(null);
+  const [uploadMsg, setUploadMsg] = useState<{ type: "ok" | "err"; text: string }>();
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState(null);
@@ -45,21 +38,8 @@ export default function App() {
 
   const [animKey, setAnimKey] = useState(0);
   const [expanded, setExpanded] = useState(null);
-  const [dragging, setDragging] = useState(false);
 
-  useEffect(() => {
-    load();
-  }, []);
-
-  async function load() {
-    try {
-      const [h, f] = await Promise.all([fetchHealth(), fetchFiles()]);
-      setEsStatus(h);
-      setIndexedFiles(f.files || []);
-    } catch {
-      setEsStatus({ status: "down", documents: 0 });
-    }
-  }
+  const { data: indexedFiles, isLoading: isFilesLoading } = useLoadFiles();
 
   async function doSearch(q = query) {
     if (!q.trim()) return;
@@ -95,15 +75,13 @@ export default function App() {
       const text = d.files
         .map(
           (f: any) =>
-            `${f.filename} (${
-              f.action === "indexed" ? "indexado" : "atualizado"
+            `${f.filename} (${f.action === "indexed" ? "indexado" : "atualizado"
             }, ${fmt(f.lineCount)} linhas)`,
         )
         .join(", ");
 
       setUploadMsg({ type: "ok", text });
 
-      await load();
       setResults(null);
     } catch (e: any) {
       setUploadMsg({ type: "err", text: e.message });
@@ -112,97 +90,52 @@ export default function App() {
     }
   }, []);
 
-  const onDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      setDragging(false);
-      uploadFiles(e.dataTransfer.files);
-    },
-    [uploadFiles],
-  );
-
-  async function removeFile(id: string) {
-    try {
-      await deleteFile(id);
-      setIndexedFiles((prev) => prev.filter((f: any) => f.id !== id));
-      setResults(null);
-      await load();
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  const getColor = () => {
-    if (!esStatus) return theme.palette.error.main;
-    if (esStatus.status === "green") return theme.palette.success.main;
-    if (esStatus.status === "yellow") return theme.palette.warning.main;
-    return theme.palette.error.main;
-  };
-
   return (
-    <AppContainer>
-      <HeaderContainer>
-        <HeaderRow>
-          <Logo>⌕</Logo>
+      <AppContainer>
+        <HeaderContainer>
+          <HeaderRow>
+            <Logo>⌕</Logo>
 
-          <TitleGroup>
-            <Title>Log File Similarity Search</Title>
-            <Subtitle>
-              Elasticsearch BM25 · arquivos persistidos no índice
-            </Subtitle>
-          </TitleGroup>
+            <TitleGroup>
+              <Title>Log File Similarity Search</Title>
+              <Subtitle>
+                Elasticsearch BM25 · arquivos persistidos no índice
+              </Subtitle>
+            </TitleGroup>
 
-          {esStatus && (
-            <StatusBox>
-              <StatusDot color={getColor()} />
-              Elasticsearch
-              <span>{esStatus.documents} docs</span>
-            </StatusBox>
-          )}
-        </HeaderRow>
+            <StatusES />
+          </HeaderRow>
 
-        <ContentWrapper>
-          {uploadMsg && (
-            <UploadMessageBox type={uploadMsg.type}>
-              {uploadMsg.text}
-            </UploadMessageBox>
-          )}
+          <ContentWrapper>
+            <FileDropzone />
 
-          <Dropzone
-            uploading={uploading}
-            dragging={dragging}
-            setDragging={setDragging}
-            onDrop={onDrop}
-            onUpload={uploadFiles}
-          />
+            <FilesChip />
 
-          <FilesChip files={indexedFiles} onRemove={removeFile} />
+            <SearchSection
+              query={query}
+              setQuery={setQuery}
+              onSearch={() => doSearch()}
+              disabled={!indexedFiles.length || !query.trim()}
+              loading={searching}
+            />
 
-          <SearchSection
-            query={query}
-            setQuery={setQuery}
-            onSearch={() => doSearch()}
-            disabled={!indexedFiles.length || !query.trim()}
-            loading={searching}
-          />
+            {!indexedFiles.length && !uploading && (
+              <UploadHint>
+                ↑ Faça upload de pelo menos um arquivo .log para indexar no
+                Elasticsearch
+              </UploadHint>
+            )}
+          </ContentWrapper>
+        </HeaderContainer>
 
-          {!indexedFiles.length && !uploading && (
-            <UploadHint>
-              ↑ Faça upload de pelo menos um arquivo .log para indexar no
-              Elasticsearch
-            </UploadHint>
-          )}
-        </ContentWrapper>
-      </HeaderContainer>
-
-      <Results
-        key={animKey}
-        searching={searching}
-        results={results}
-        error={searchError}
-        expanded={expanded}
-        setExpanded={setExpanded}
-      />
-    </AppContainer>
+        <Results
+          key={animKey}
+          searching={searching}
+          results={results}
+          error={searchError}
+          expanded={expanded}
+          setExpanded={setExpanded}
+        />
+      </AppContainer>
   );
 }

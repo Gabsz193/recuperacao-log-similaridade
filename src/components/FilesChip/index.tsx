@@ -1,18 +1,25 @@
+import useDeleteFile from "../../hooks/useDeleteFile";
+import useLoadFiles from "../../hooks/useLoadFiles";
 import { fileSize, fmt } from "../../utils/format";
 import { Chip, FileName, FilesContainer, RemoveButton } from "./styles";
 
-export function FilesChip({ files, onRemove }) {
-  if (!files.length) return null;
+export function FilesChip() {
+  const { data: files, isLoading } = useLoadFiles();  
+  const { mutate: deleteFile } = useDeleteFile();
+
+
+  if (isLoading) return <div>Carregando arquivos...</div>;
+  
 
   return (
     <FilesContainer>
       {files.map((f) => (
-        <Chip key={f.id}>
+        <Chip key={f.filename}>
           📄
           <FileName>{f.filename}</FileName>
           <span>{fmt(f.line_count)} linhas</span>
-          <span>{fileSize(f.file_size)}</span>
-          <RemoveButton onClick={() => onRemove(f.id)}>×</RemoveButton>
+          <span>{fileSize(128718)}</span>
+          <RemoveButton onClick={() => deleteFile(f.filename)}>×</RemoveButton>
         </Chip>
       ))}
     </FilesContainer>
