@@ -4,6 +4,8 @@ from .controller import (
     list_files_controller,
     delete_file_controller,
     search_logs_controller,
+    import_logs_controller,
+    metrics_controller,
     health_controller,
 )
 
@@ -22,6 +24,14 @@ def delete_file(id):
 @bp.route('/search', methods=['POST'])
 def search_logs():
     return search_logs_controller()
+
+@bp.route('/import', methods=['POST'])
+def import_logs():
+    return import_logs_controller()
+
+@bp.route('/metrics', methods=['GET'])
+def metrics():
+    return metrics_controller()
 
 @bp.route('/health', methods=['GET'])
 def health():

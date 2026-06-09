@@ -2,3 +2,4 @@ flask
 flask-cors
 elasticsearch==8
 python-dotenv
+openpyxl
