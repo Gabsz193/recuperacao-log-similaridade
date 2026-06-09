@@ -67,164 +67,93 @@ sejam tratados como semanticamente idênticos.
 
 ### Pré-requisitos
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop) instalado e rodando
-- [Node.js](https://nodejs.org) v18 ou superior
-- npm
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) ou Docker Engine instalado e rodando
 
-### Estrutura de pastas
+### Execução via Docker Compose
 
-```
-recuperacao-log-similaridade/
-├── server/
-    ├── docker-compose.yml
-├── src/                        ← frontend React
-│   ├── App.jsx
-│   ├── main.jsx
-│   └── ...
-└── src/Api/                    ← backend Express
-    ├── server.js
-    └── package.json
-```
-
-### Passo 1 — Subir o Elasticsearch
-
-Na pasta raiz do projeto (onde está o `docker-compose.yml`):
+Para compilar e iniciar todos os serviços da aplicação de forma integrada (Elasticsearch, API em Python/Flask e Frontend em React/Vite), basta executar o comando a seguir no diretório raiz do projeto:
 
 ```bash
-cd server
-docker compose up -d
+docker-compose up --build -d
 ```
 
-Verifique se subiu:
+Após a inicialização bem-sucedida de todos os contêineres:
+- **Interface Web (Frontend):** Disponível em [http://localhost:3000](http://localhost:3000)
+- **Serviço de API (Backend):** Disponível em [http://localhost:5000](http://localhost:5000)
+- **Elasticsearch:** Disponível em [http://localhost:9200](http://localhost:9200)
+
+---
+
+## 📦 Importação dos Documentos (Dataset)
+
+A aplicação suporta a importação automática em lote dos 69 pares de issues/logs estruturados a partir da pasta `pares_logs_issues`. Há duas maneiras de realizar esta importação:
+
+### Opção A: Pela Interface Gráfica (Recomendado)
+1. Acesse o Frontend em `http://localhost:3000`.
+2. No canto superior direito, clique no botão **"Importar em Lote"**.
+3. O sistema varrerá os diretórios, indexará os pares no Elasticsearch e atualizará o contador de documentos na tela.
+
+### Opção B: Via Terminal (Curl)
+Você também pode disparar a indexação em lote chamando diretamente a rota da API pelo terminal:
 ```bash
-curl http://localhost:9200
-# Deve retornar JSON com "tagline": "You Know, for Search"
+curl -X POST http://localhost:5000/logs/import
 ```
-
-### Passo 2 — Rodar a API
-
-```bash
-cd src/Api
-npm install
-npm run dev
-```
-
-Saída esperada:
-```
-✅ Índice 'log-files' criado com log_analyzer
-🚀 API rodando em http://localhost:3001
-```
-
-Verifique o status:
-```
-GET http://localhost:3001/api/health
-```
-
-### Passo 3 — Rodar o Frontend
-
-```bash
-cd src
-npm install
-npm run dev
-```
-
-Acesse **http://localhost:5173** no navegador.
 
 ---
 
 ## 📡 Endpoints da API
 
-### `GET /api/health`
+### `GET /logs/health`
 Retorna o status do cluster Elasticsearch e o total de documentos indexados.
 
 ```json
-{ "status": "green", "documents": 42 }
+{ "status": "green", "documents": 69 }
 ```
 
 ---
 
-### `POST /api/upload`
-Indexa um ou mais arquivos de log. Aceita `multipart/form-data`.
+### `POST /logs/upload`
+Indexa um par de documentos (evento e log correspondente). Aceita `multipart/form-data`.
 
-**Campo:** `files` (múltiplos arquivos `.log`, `.txt`, `.csv`)
-
-```json
-{
-  "success": true,
-  "files": [
-    { "filename": "auth.log", "action": "indexed", "lineCount": 2048 },
-    { "filename": "syslog.log", "action": "updated", "lineCount": 15420 }
-  ]
-}
-```
-
-`action` pode ser `"indexed"` (novo) ou `"updated"` (já existia, foi substituído).
+**Campos:**
+- `event_file`: Arquivo de issue/evento (`.md` ou `.txt`)
+- `log_file`: Arquivo de log correspondente (`.log` ou `.txt`)
+- `app_name` (opcional): Nome da aplicação correspondente
+- `pair_id` (opcional): Identificador único do par
 
 ---
 
-### `GET /api/files`
-Lista todos os arquivos atualmente indexados no Elasticsearch.
-
-```json
-{
-  "files": [
-    {
-      "id": "abc123",
-      "filename": "auth.log",
-      "line_count": 2048,
-      "file_size": 204800,
-      "uploaded_at": "2024-04-24T12:00:00.000Z"
-    }
-  ]
-}
-```
+### `GET /logs/files`
+Lista todos os pares de logs e eventos atualmente indexados no Elasticsearch.
 
 ---
 
-### `POST /api/search`
-Busca arquivos similares ao log de referência usando BM25.
+### `POST /logs/search`
+Busca arquivos similares usando o algoritmo BM25 no Elasticsearch.
 
 **Body:**
 ```json
 {
-  "query": "Failed password for root from 192.168.1.1 port 22 ssh2",
+  "query": "app crashes opening settings screen",
+  "search_type": "event",
   "size": 10
 }
 ```
 
-**Resposta:**
-```json
-{
-  "total": 3,
-  "max_score": 14.72,
-  "hits": [
-    {
-      "id": "abc123",
-      "filename": "auth.log",
-      "line_count": 2048,
-      "file_size": 204800,
-      "score": 14.72,
-      "highlights": [
-        {
-          "text": "Dec 10 07:33:02 LabSZ sshd: Failed password for root from port ssh2",
-          "marked": "Dec 10 07:33:02 LabSZ sshd: <<<Failed password>>> for <<<root>>>"
-        }
-      ]
-    }
-  ]
-}
-```
+---
 
-O campo `highlights` contém os trechos do arquivo com maior sobreposição com a query, já extraídos pelo Elasticsearch.
+### `POST /logs/import`
+Realiza a varredura recursiva de diretórios sob `pares_logs_issues/out` e indexa todos os pares no Elasticsearch.
 
 ---
 
-### `DELETE /api/files/:id`
-Remove um arquivo do índice pelo seu ID.
+### `GET /logs/metrics`
+Calcula as métricas de MRR e nDCG@5 a partir do gabarito XLSX para as quatro estratégias de busca implementadas.
 
-```json
-{ "success": true }
-```
+---
+
+### `DELETE /logs/files/:id`
+Remove um par do índice pelo seu ID de documento.
 
 ---
 
@@ -232,11 +161,12 @@ Remove um arquivo do índice pelo seu ID.
 
 | Camada | Tecnologia |
 |---|---|
-| Frontend | React 18 + Vite |
-| Backend | Node.js + Express |
+| Frontend | React 19 + Vite |
+| Backend | Python 3 + Flask |
 | Motor de busca | Elasticsearch 8.12 |
 | Containerização | Docker + Docker Compose |
 | Algoritmo de ranking | BM25 (nativo do Elasticsearch) |
+| Bibliotecas Auxiliares | openpyxl (leitura de planilhas de métricas), react-icons (interface minimalista) |
 ---
 
 ## 📄 Licença
