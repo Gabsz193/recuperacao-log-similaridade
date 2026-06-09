@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Python virtual environment
+venv/
+*.xlsx
+pares_logs_issues/
+
+
