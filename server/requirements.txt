@@ -3,3 +3,6 @@ flask-cors
 elasticsearch==8
 python-dotenv
 openpyxl
+ir-measures
+matplotlib
+wordcloud

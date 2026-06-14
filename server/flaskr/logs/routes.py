@@ -7,6 +7,9 @@ from .controller import (
     import_logs_controller,
     metrics_controller,
     health_controller,
+    metrics_chart_controller,
+    wordcloud_chart_controller,
+    word_freq_chart_controller,
 )
 
 @bp.route('/upload', methods=['POST'])
@@ -36,3 +39,15 @@ def metrics():
 @bp.route('/health', methods=['GET'])
 def health():
     return health_controller()
+
+@bp.route('/charts/metrics', methods=['GET'])
+def metrics_chart():
+    return metrics_chart_controller()
+
+@bp.route('/charts/wordcloud', methods=['GET'])
+def wordcloud_chart():
+    return wordcloud_chart_controller()
+
+@bp.route('/charts/word-freq', methods=['GET'])
+def word_freq_chart():
+    return word_freq_chart_controller()

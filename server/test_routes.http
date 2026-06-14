@@ -1,0 +1,21 @@
+# Listas os arquivos presentes
+GET {{API_BASE_URL}}/logs/files
+
+###
+
+@query = Alguma coisa muito específica
+
+# Procurar arquivos com base em uma query
+POST {{API_BASE_URL}}/logs/search?q={{query}}
+
+###
+
+# Ver status do elastic search
+GET {{API_BASE_URL}}/logs/health
+
+###
+
+# Fazer upload de arquivos
+POST {{API_BASE_URL}}/logs/upload
+
+###

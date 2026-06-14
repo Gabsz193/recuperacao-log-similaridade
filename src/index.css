@@ -1,12 +1,11 @@
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
+  --text: #334155;
+  --bg: #f8fafc;
+  --border: #cbd5e1;
+  --code-bg: #f1f5f9;
+  --accent: #2563eb;
+  --accent-bg: rgba(37, 99, 235, 0.1);
+  --accent-border: rgba(37, 99, 235, 0.5);
   --social-bg: rgba(244, 243, 236, 0.5);
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
@@ -25,6 +24,26 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
+  /* App Custom variables (Light Mode) */
+  --app-bg: #f8fafc;
+  --app-panel: #ffffff;
+  --app-border: #e2e8f0;
+  --app-accent: #2563eb;
+  --app-text: #334155;
+  --app-muted: #64748b;
+  --app-faint: #f1f5f9;
+
+  --panel-hover: #f8fafc;
+  --input-bg: #ffffff;
+  --expanded-bg: #f8fafc;
+  --inner-bg: #ffffff;
+  --code-block-bg: #f1f5f9;
+  --badge-bg: #f1f5f9;
+  --button-disabled: #cbd5e1;
+  --text-disabled: #94a3b8;
+  --modal-bg: rgba(15, 23, 42, 0.6);
+  --text-header: #0f172a;
+
   @media (max-width: 1024px) {
     font-size: 16px;
   }
@@ -33,20 +52,35 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
+    --bg: #07090f;
+    --border: #162033;
     --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
+    --accent: #3b82f6;
+    --accent-bg: rgba(59, 130, 246, 0.15);
+    --accent-border: rgba(59, 130, 246, 0.5);
     --social-bg: rgba(47, 48, 58, 0.5);
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+    /* App Custom variables (Dark Mode) */
+    --app-bg: #07090f;
+    --app-panel: #0c1422;
+    --app-border: #162033;
+    --app-accent: #3b82f6;
+    --app-text: #b8cce0;
+    --app-muted: #526d8c;
+    --app-faint: #101b2d;
+
+    --panel-hover: #121c2e;
+    --input-bg: #0a1220;
+    --expanded-bg: #080e1a;
+    --inner-bg: #050911;
+    --code-block-bg: #020408;
+    --badge-bg: #0a1220;
+    --button-disabled: #111827;
+    --text-disabled: #2a3a50;
+    --modal-bg: rgba(3, 5, 10, 0.85);
+    --text-header: #dde8f8;
   }
 }
 

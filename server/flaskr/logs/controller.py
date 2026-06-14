@@ -1,5 +1,8 @@
-from flask import jsonify, request
+import io
+from flask import jsonify, request, send_file
+import matplotlib.pyplot as plt
 from .services import LogService
+
 
 log_service = LogService()
 
@@ -74,3 +77,31 @@ def health_controller():
         return jsonify(status), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 503
+
+def serve_plot(fig):
+    img_buf = io.BytesIO()
+    fig.savefig(img_buf, format='png', bbox_inches='tight', dpi=150, facecolor='#0c1422')
+    img_buf.seek(0)
+    plt.close(fig)
+    return send_file(img_buf, mimetype='image/png')
+
+def metrics_chart_controller():
+    try:
+        fig = log_service.generate_metrics_chart()
+        return serve_plot(fig)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def wordcloud_chart_controller():
+    try:
+        fig = log_service.generate_wordcloud_chart()
+        return serve_plot(fig)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def word_freq_chart_controller():
+    try:
+        fig = log_service.generate_word_freq_chart()
+        return serve_plot(fig)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

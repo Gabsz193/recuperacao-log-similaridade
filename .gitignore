@@ -25,7 +25,4 @@ dist-ssr
 
 # Python virtual environment
 venv/
-*.xlsx
-pares_logs_issues/
-
 

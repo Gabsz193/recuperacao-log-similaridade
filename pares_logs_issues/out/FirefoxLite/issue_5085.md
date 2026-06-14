@@ -1,0 +1,40 @@
+# 5085 - Firefox Lite crashes when changing app language
+
+- URL: https://github.com/mozilla-mobile/FirefoxLite/issues/5085
+- State: closed
+- Author: swlibi
+- Created: 2020-06-09T03:10:03Z
+
+---
+
+**Describe the bug**
+Firefox Lite crashes when changing language
+
+**Steps To Reproduce**
+Steps to reproduce the behavior:
+1. Go to Settings in Firefox Lite
+2. Click on Language
+3. Change the different language
+4. See error "Unfortunately, Firefox Lite has stopped."
+
+**Expected behavior**
+Switch the system language smoothly.
+
+**Actual behavior**
+Crash
+
+**Screenshots/videos**
+https://drive.google.com/file/d/1KWi4rahzzCLVeHwvvpGiVrvkuPw5YXgG/view?usp=sharing
+
+
+**Device info (please complete the following information):**
+ - Device: Galaxy S6 edge
+ - OS: Android 6.0.1
+ - Webview 84.0.4147.37
+ - Version 2.1.20 (19787)
+
+**Reproduce rate**
+5/5
+
+**Additional context**
+https://console.firebase.google.com/u/0/project/zerda-dcf76/crashlytics/app/android:org.mozilla.rocket/issues/c324bf4b1e541feb2600b9ded4439fc9?time=last-seven-days&sessionId=5EDEC5A7030B00015F00FD8F4116BBB8_DNE_0_v2

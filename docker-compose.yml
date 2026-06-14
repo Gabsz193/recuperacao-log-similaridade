@@ -26,7 +26,7 @@ services:
       - "5000:5000"
     volumes:
       - ./pares_logs_issues:/app/pares_logs_issues
-      - ./relevancia_esperada_logs_116_118_285.xlsx:/app/relevancia_esperada_logs_116_118_285.xlsx
+      - ./julgamento_relevancia_40_queries.xlsx:/app/julgamento_relevancia_40_queries.xlsx
       - ./server/flaskr:/app/flaskr
     depends_on:
       elasticsearch:
